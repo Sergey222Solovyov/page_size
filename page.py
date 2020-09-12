@@ -31,18 +31,33 @@ class LinkExtractor(HTMLParser):
         #     print("     attr:", attr)
 
 
-for url in sites:
-    print(f'Go {url}...')
-    res = urlopen(url)
-    html_data = res.read()
-    html_data = html_data.decode('utf8')
-    total_bytes = len(html_data)
-    extractor = LinkExtractor()
-    extractor.feed(html_data)
-    print(extractor.links)
-    for link in extractor.links:
-        print(f'\tGo {link}...')
-        res = urlopen(link)
-        extra_data = res.read()
-        total_bytes += len(extra_data)
-    print(f'For url {url} need download {total_bytes // 1024} Kb')
+class PageSizer:
+    def __init__(self, url):
+        self.url = url
+        self.total_bytes = 0
+
+    def run(self):
+        self.total_bytes = 0
+        html_data = self._get_html(url=self.url)
+        html_data = html_data.decode('utf8')
+        self.total_bytes += len(html_data)
+        extractor = LinkExtractor()
+        extractor.feed(html_data)
+        for link in extractor.links:
+            extra_data = self._get_html(url=link)
+            self.total_bytes += len(extra_data)
+
+    def _get_html(self, url):
+        res = urlopen(url)
+        return res.read()
+
+
+for links in sites:
+    print(f'Go {links}...')
+    sizer = PageSizer(url=links)
+    sizer.run()
+    print(f'For url {links} need download {sizer.total_bytes// 1024} Kb')
+
+
+
+
