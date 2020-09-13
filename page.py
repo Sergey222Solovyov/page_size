@@ -1,3 +1,4 @@
+import time
 from urllib.request import urlopen
 from html.parser import HTMLParser
 from html.entities import name2codepoint
@@ -7,6 +8,20 @@ sites = ['https://stackoverflow.com/',
          'https://habr.com/ru/news/',
          'https://twitter.com/',
          ]
+
+
+def time_track(func):
+    def surrogate(*args, **kwargs):
+        started_at = time.time()
+
+        result = func(*args, **kwargs)
+
+        ended_at = time.time()
+        elapsed = round(ended_at - started_at, 4)
+        print(f'The function worked for {elapsed} seconds')
+        return result
+
+    return surrogate
 
 
 class LinkExtractor(HTMLParser):
@@ -40,7 +55,8 @@ class PageSizer:
         self.total_bytes = 0
         html_data = self._get_html(url=self.url)
         html_data = html_data.decode('utf8')
-        self.total_bytes += len(html_data)
+        self.total_bytes +=\
+            len(html_data)
         extractor = LinkExtractor()
         extractor.feed(html_data)
         for link in extractor.links:
@@ -48,16 +64,20 @@ class PageSizer:
             self.total_bytes += len(extra_data)
 
     def _get_html(self, url):
+        print(f'Go {url}...')
         res = urlopen(url)
         return res.read()
 
 
-for links in sites:
-    print(f'Go {links}...')
-    sizer = PageSizer(url=links)
-    sizer.run()
-    print(f'For url {links} need download {sizer.total_bytes// 1024} Kb')
+@time_track
+def main():
+    sizers = [PageSizer(url=links) for links in sites]
+
+    for sizer in sizers:
+        sizer.run()
+    for sizer in sizers:
+        print(f'For url {sizer.url} need download {sizer.total_bytes // 1024} Kb')
 
 
-
-
+if __name__ == '__main__':
+    main()
