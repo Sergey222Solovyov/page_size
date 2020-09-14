@@ -1,49 +1,13 @@
-import time
 from urllib.request import urlopen
-from html.parser import HTMLParser
-from html.entities import name2codepoint
+
+from extractor import LinkExtractor
+from utils import time_track
 
 sites = ['https://stackoverflow.com/',
          'https://www.khanacademy.org/',
          'https://habr.com/ru/news/',
          'https://twitter.com/',
          ]
-
-
-def time_track(func):
-    def surrogate(*args, **kwargs):
-        started_at = time.time()
-
-        result = func(*args, **kwargs)
-
-        ended_at = time.time()
-        elapsed = round(ended_at - started_at, 4)
-        print(f'The function worked for {elapsed} seconds')
-        return result
-
-    return surrogate
-
-
-class LinkExtractor(HTMLParser):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.links = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag not in ('link', 'script'):
-            return
-
-        # print("Start tag:", tag)
-
-        attrs = dict(attrs)
-        if 'rel' in attrs and attrs['rel'] == 'stylesheet':
-            self.links.append(attrs['href'])
-        elif 'src' in attrs:
-            self.links.append(attrs['src'])
-
-        # for attr in attrs:
-        #     print("     attr:", attr)
 
 
 class PageSizer:
