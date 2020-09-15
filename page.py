@@ -2,7 +2,7 @@ from urllib.request import urlopen
 
 from extractor import LinkExtractor
 from utils import time_track
-
+import threading
 sites = ['https://stackoverflow.com/',
          'https://www.khanacademy.org/',
          'https://habr.com/ru/news/',
@@ -10,8 +10,9 @@ sites = ['https://stackoverflow.com/',
          ]
 
 
-class PageSizer:
-    def __init__(self, url):
+class PageSizer(threading.Thread):
+    def __init__(self, url, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.url = url
         self.total_bytes = 0
 
@@ -19,8 +20,7 @@ class PageSizer:
         self.total_bytes = 0
         html_data = self._get_html(url=self.url)
         html_data = html_data.decode('utf8')
-        self.total_bytes +=\
-            len(html_data)
+        self.total_bytes += len(html_data)
         extractor = LinkExtractor()
         extractor.feed(html_data)
         for link in extractor.links:
@@ -38,7 +38,10 @@ def main():
     sizers = [PageSizer(url=links) for links in sites]
 
     for sizer in sizers:
-        sizer.run()
+        sizer.start()
+    for sizer in sizers:
+        sizer.join()
+
     for sizer in sizers:
         print(f'For url {sizer.url} need download {sizer.total_bytes // 1024} Kb')
 
